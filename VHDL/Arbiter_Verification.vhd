@@ -29,14 +29,14 @@ architecture behavioral of testbench is
 		);
 	end component;
 	
-    component driver is
-        port (
-            clk : in std_logic;
-            cmd : in std_logic;
-            n1, n2, n3 : in signed(2 downto 0);
-            req : in std_logic_vector(2 downto 0)
-        );
-    end component;
+	component driver is
+		port (
+			clk : in std_logic;
+			cmd : in std_logic;
+			n1, n2, n3 : in signed(2 downto 0);
+			req : in std_logic_vector(2 downto 0)
+		);
+	end component;
 
 	signal clk_tb, reset_tb, cmd_tb : std_logic := '0';
 	signal protocol_violation_tb : std_logic;
@@ -58,14 +58,14 @@ begin
 		n3 => n3_tb
 	);
 	
-    i1: driver port map(
-        clk => clk_tb,
-        cmd => cmd_tb,
-        req => req_tb,
+	i1: driver port map(
+		clk => clk_tb,
+		cmd => cmd_tb,
+		req => req_tb,
 		n1 => n1_tb,
 		n2 => n2_tb,
 		n3 => n3_tb
-    );
+	);
     
 	i2: property_checker port map(
 		clk => clk_tb,

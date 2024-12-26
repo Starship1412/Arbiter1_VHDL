@@ -16,15 +16,14 @@ end arbiter;
 architecture behavioral of arbiter is
 	type state_type is (IDLE, READY_1, READY_2, GO);
 	signal current_state, next_state : state_type := IDLE;
-	signal gnt_temp : std_logic_vector(2 downto 0);
 	signal counter : unsigned(1 downto 0) := "00";
-	signal req_temp : std_logic_vector(2 downto 0) := (others => '0');
+	signal req_temp, gnt_temp : std_logic_vector(2 downto 0) := (others => '0');
 	signal n1_temp, n2_temp, n3_temp : signed(2 downto 0) := (others => '0');
 begin
 	gnt <= gnt_temp;
 	n1 <= n1_temp;
-    n2 <= n2_temp;
-    n3 <= n3_temp;
+	n2 <= n2_temp;
+	n3 <= n3_temp;
 	process(clk)
 	begin
 		if rising_edge(clk) then
