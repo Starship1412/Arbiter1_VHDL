@@ -14,10 +14,11 @@ entity arbiter is
 end arbiter;
 
 architecture behavioral of arbiter is
-	type state_type is (IDLE, READY_1, READY_2, GO);
-	signal current_state, next_state : state_type := IDLE;
+	type state_type is (IDLE, READY, GO);
+	signal prev_current_state, current_state, next_state : state_type := IDLE;
+	signal prev_cmd : std_logic;
 	signal counter : unsigned(1 downto 0) := "00";
-	signal req_temp, req_delayed, gnt_temp : std_logic_vector(2 downto 0) := (others => '0');
+	signal req_temp, gnt_temp : std_logic_vector(2 downto 0) := (others => '0');
 	signal n1_temp, n2_temp, n3_temp : signed(2 downto 0) := (others => '0');
 begin
 	gnt <= gnt_temp;
@@ -28,131 +29,123 @@ begin
 	begin
 		if rising_edge(clk) then
 			if reset = '1' then
-				req_delayed <= (others => '0');
 				current_state <= IDLE;
 			else
-				req_delayed <= req;
 				current_state <= next_state;
 			end if;
 		end if;
 	end process;
 
-	process(current_state, cmd)
+	process(current_state, cmd, clk)
 	begin
 		case current_state is
 			when IDLE =>
-				gnt_temp <= "000";
-				if reset = '0' then
-					if cmd = '1' then
-						next_state <= READY_1;
+				if current_state /= prev_current_state or cmd /= prev_cmd then
+					gnt_temp <= "000";
+					prev_current_state <= current_state;
+					prev_cmd <= cmd;
+					if reset = '0' then
+						if cmd = '1' then
+							req_temp <= req;
+							next_state <= READY;
+						else
+							next_state <= IDLE;
+						end if;
 					else
 						next_state <= IDLE;
-					end if;
-				else
-					next_state <= IDLE;
-					n1_temp <= (others => '0');
-					n2_temp <= (others => '0');
-					n3_temp <= (others => '0');
-					counter <= "00";
-					req_temp <= (others => '0');
-				end if;
-			when READY_1 =>
-				gnt_temp <= "000";
- 				if cmd = '0' then
- 					if falling_edge(cmd) then
- 						req_temp <= req_delayed;
- 					end if;
- 					if counter /= 2 then
-						counter <= counter + 1;
-						next_state <= READY_2;
-					else
+						n1_temp <= (others => '0');
+						n2_temp <= (others => '0');
+						n3_temp <= (others => '0');
 						counter <= "00";
-						next_state <= GO;
+						req_temp <= (others => '0');
 					end if;
-				else
-					counter <= "00";
- 					next_state <= READY_1;
 				end if;
-			when READY_2 =>
-				gnt_temp <= "000";
-				if cmd = '0' then
- 					if falling_edge(cmd) then
- 						req_temp <= req_delayed;
- 					end if;
-					if counter = 2 then
-						counter <= "00";
-						next_state <= GO;
+			when READY =>
+				if current_state /= prev_current_state or cmd /= prev_cmd or (rising_edge(clk) and next_state /= GO) then
+					gnt_temp <= "000";
+					prev_current_state <= current_state;
+					prev_cmd <= cmd;
+					if cmd = '0' then
+						if counter < 2 then
+							counter <= counter + 1;
+							next_state <= READY;
+						else
+							counter <= "00";
+							next_state <= GO;
+						end if;
 					else
-						counter <= counter + 1;
-						next_state <= READY_1;
+						req_temp <= req;
+						counter <= "00";
+						next_state <= READY;
 					end if;
-				else
-					counter <= "00";
-					next_state <= READY_2;
 				end if;
 			when GO =>
-				if cmd = '0' then
-				    next_state <= IDLE;
-					if req_temp = "000" then
-  						gnt_temp <= "000";
-					elsif req_temp = "001" then
-						gnt_temp <= "001";
-					elsif req_temp = "010" then
-						gnt_temp <= "010";
-					elsif req_temp = "100" then
-						gnt_temp <= "100";
-					elsif req_temp = "011" then
-						if n1_temp <= n2_temp then
- 							gnt_temp <= "001";
-							n1_temp <= n1_temp + 1;
-							n2_temp <= n2_temp - 1;
-						else
-							gnt_temp <= "010";
-							n1_temp <= n1_temp - 1;
-							n2_temp <= n2_temp + 1;
-						end if;
-					elsif req_temp = "101" then
-						if n1_temp <= n3_temp then
+				if current_state /= prev_current_state or cmd /= prev_cmd then
+					prev_current_state <= current_state;
+					prev_cmd <= cmd;
+					if cmd = '0' then
+						next_state <= IDLE;
+						if req_temp = "000" then
+							gnt_temp <= "000";
+						elsif req_temp = "001" then
 							gnt_temp <= "001";
-							n1_temp <= n1_temp + 1;
-							n3_temp <= n3_temp - 1;
- 						else
-							gnt_temp <= "100";
-							n1_temp <= n1_temp - 1;
-							n3_temp <= n3_temp + 1;
-						end if;
-					elsif req_temp = "110" then
-						if n2_temp <= n3_temp then
+						elsif req_temp = "010" then
 							gnt_temp <= "010";
-							n2_temp <= n2_temp + 1;
-							n3_temp <= n3_temp - 1;
-						else
+						elsif req_temp = "100" then
 							gnt_temp <= "100";
-							n2_temp <= n2_temp - 1;
-							n3_temp <= n3_temp + 1;
+						elsif req_temp = "011" then
+							if n1_temp <= n2_temp then
+								gnt_temp <= "001";
+								n1_temp <= n1_temp + 1;
+								n2_temp <= n2_temp - 1;
+							else
+								gnt_temp <= "010";
+								n1_temp <= n1_temp - 1;
+								n2_temp <= n2_temp + 1;
+							end if;
+						elsif req_temp = "101" then
+							if n1_temp <= n3_temp then
+								gnt_temp <= "001";
+								n1_temp <= n1_temp + 1;
+								n3_temp <= n3_temp - 1;
+							else
+								gnt_temp <= "100";
+								n1_temp <= n1_temp - 1;
+								n3_temp <= n3_temp + 1;
+							end if;
+						elsif req_temp = "110" then
+							if n2_temp <= n3_temp then
+								gnt_temp <= "010";
+								n2_temp <= n2_temp + 1;
+								n3_temp <= n3_temp - 1;
+							else
+								gnt_temp <= "100";
+								n2_temp <= n2_temp - 1;
+								n3_temp <= n3_temp + 1;
+							end if;
+						elsif req_temp = "111" then
+							if n1_temp <= n2_temp and n1_temp <= n3_temp then
+								gnt_temp <= "001";
+								n1_temp <= n1_temp + 2;
+								n2_temp <= n2_temp - 1;
+								n3_temp <= n3_temp - 1;
+							elsif n2_temp <= n1_temp and n2_temp <= n3_temp then
+								gnt_temp <= "010";
+								n1_temp <= n1_temp - 1;
+								n2_temp <= n2_temp + 2;
+								n3_temp <= n3_temp - 1;
+							elsif n3_temp <= n1_temp and n3_temp <= n2_temp then
+								gnt_temp <= "100";
+								n1_temp <= n1_temp - 1;
+								n2_temp <= n2_temp - 1;
+								n3_temp <= n3_temp + 2;
+							end if;
 						end if;
-					elsif req_temp = "111" then
-						if n1_temp <= n2_temp and n1_temp <= n3_temp then
-							gnt_temp <= "001";
-							n1_temp <= n1_temp + 2;
-							n2_temp <= n2_temp - 1;
-							n3_temp <= n3_temp - 1;
-						elsif n2_temp <= n1_temp and n2_temp <= n3_temp then
-							gnt_temp <= "010";
-							n1_temp <= n1_temp - 1;
-							n2_temp <= n2_temp + 2;
-							n3_temp <= n3_temp - 1;
-						elsif n3_temp <= n1_temp and n3_temp <= n2_temp then
-							gnt_temp <= "100";
-							n1_temp <= n1_temp - 1;
-							n2_temp <= n2_temp - 1;
-							n3_temp <= n3_temp + 2;
-						end if;
+					else
+						req_temp <= req;
+						counter <= "00";
+						next_state <= READY;
 					end if;
-				else
-					req_temp <= req;
-					counter <= "00";
-					next_state <= READY_1;
 				end if;
 		end case;
 	end process;
