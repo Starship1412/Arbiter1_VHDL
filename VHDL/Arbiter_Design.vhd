@@ -17,7 +17,7 @@ architecture behavioral of arbiter is
 	type state_type is (IDLE, READY_1, READY_2, GO);
 	signal current_state, next_state : state_type := IDLE;
 	signal counter : unsigned(1 downto 0) := "00";
-	signal req_temp, gnt_temp : std_logic_vector(2 downto 0) := (others => '0');
+	signal req_temp, req_delayed, gnt_temp : std_logic_vector(2 downto 0) := (others => '0');
 	signal n1_temp, n2_temp, n3_temp : signed(2 downto 0) := (others => '0');
 begin
 	gnt <= gnt_temp;
@@ -28,8 +28,10 @@ begin
 	begin
 		if rising_edge(clk) then
 			if reset = '1' then
+				req_delayed <= (others => '0');
 				current_state <= IDLE;
 			else
+				req_delayed <= req;
 				current_state <= next_state;
 			end if;
 		end if;
@@ -42,7 +44,6 @@ begin
 				gnt_temp <= "000";
 				if reset = '0' then
 					if cmd = '1' then
-						req_temp <= req;
 						next_state <= READY_1;
 					else
 						next_state <= IDLE;
@@ -58,6 +59,9 @@ begin
 			when READY_1 =>
 				gnt_temp <= "000";
  				if cmd = '0' then
+ 					if falling_edge(cmd) then
+ 						req_temp <= req_delayed;
+ 					end if;
  					if counter /= 2 then
 						counter <= counter + 1;
 						next_state <= READY_2;
@@ -66,13 +70,15 @@ begin
 						next_state <= GO;
 					end if;
 				else
-					req_temp <= req;
 					counter <= "00";
  					next_state <= READY_1;
 				end if;
 			when READY_2 =>
 				gnt_temp <= "000";
 				if cmd = '0' then
+ 					if falling_edge(cmd) then
+ 						req_temp <= req_delayed;
+ 					end if;
 					if counter = 2 then
 						counter <= "00";
 						next_state <= GO;
@@ -81,7 +87,6 @@ begin
 						next_state <= READY_1;
 					end if;
 				else
-					req_temp <= req;
 					counter <= "00";
 					next_state <= READY_2;
 				end if;

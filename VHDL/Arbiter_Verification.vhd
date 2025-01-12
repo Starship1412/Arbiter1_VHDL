@@ -354,9 +354,9 @@ begin
 		req_tb <= "000";
 		wait for 50 ns;
 		req_tb <= "001";
-		wait for clk_period;
+		wait for 7 ns;
 		req_tb <= "000";
-		wait for 50 ns;
+		wait for 53 ns;
 		req_tb <= "000";
 		wait for clk_period;
 		req_tb <= "000";
