@@ -68,7 +68,6 @@ begin
 					if cmd = '0' then
 						if counter < 2 then
 							counter <= counter + 1;
-							next_state <= READY;
 						else
 							counter <= "00";
 							next_state <= GO;
@@ -76,7 +75,6 @@ begin
 					else
 						req_temp <= req;
 						counter <= "00";
-						next_state <= READY;
 					end if;
 				end if;
 			when GO =>
