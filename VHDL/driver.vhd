@@ -35,7 +35,7 @@ begin
 	-- Random integer value in range 0..7
 	variable int_rand_wait, int_rand_req, count: integer := 0;
 	-- Next req
-	variable req_next : std_logic_vector(2 downto 0) :="000";
+	variable req_next : std_logic_vector(2 downto 0) := "000";
 	begin
 	-- initialise seed1, seed2 if you want --
 	-- otherwise they're initialised to 1 by default

@@ -17,9 +17,9 @@ architecture behavioral of arbiter is
 	type state_type is (IDLE, READY, GO);
 	signal prev_current_state, current_state, next_state : state_type := IDLE;
 	signal prev_cmd : std_logic;
-	signal counter : unsigned(1 downto 0) := "00";
+	signal counter : unsigned(1 downto 0) := to_unsigned(0, 2);
 	signal req_temp, gnt_temp : std_logic_vector(2 downto 0) := (others => '0');
-	signal n1_temp, n2_temp, n3_temp : signed(2 downto 0) := (others => '0');
+	signal n1_temp, n2_temp, n3_temp : signed(2 downto 0) := to_signed(0, 3);
 begin
 	gnt <= gnt_temp;
 	n1 <= n1_temp;
@@ -44,7 +44,7 @@ begin
 					prev_current_state <= current_state;
 					prev_cmd <= cmd;
 					gnt_temp <= "000";
-					counter <= "00";
+					counter <= to_unsigned(0, counter'length);
 					if reset = '0' then
 						if cmd = '1' then
 							req_temp <= req;
@@ -54,9 +54,9 @@ begin
 							next_state <= IDLE;
 						end if;
 					else
-						n1_temp <= (others => '0');
-						n2_temp <= (others => '0');
-						n3_temp <= (others => '0');
+						n1_temp <= to_signed(0, n1_temp'length);
+						n2_temp <= to_signed(0, n2_temp'length);
+						n3_temp <= to_signed(0, n3_temp'length);
 						req_temp <= (others => '0');
 						next_state <= IDLE;
 					end if;
@@ -70,12 +70,12 @@ begin
 						if counter < 2 then
 							counter <= counter + 1;
 						else
-							counter <= "00";
+							counter <= to_unsigned(0, counter'length);
 							next_state <= GO;
 						end if;
 					else
 						req_temp <= req;
-						counter <= "00";
+						counter <= to_unsigned(0, counter'length);
 					end if;
 				end if;
 			when GO =>
@@ -142,7 +142,7 @@ begin
 						end if;
 					else
 						req_temp <= req;
-						counter <= "00";
+						counter <= to_unsigned(0, counter'length);
 						next_state <= READY;
 					end if;
 				end if;
