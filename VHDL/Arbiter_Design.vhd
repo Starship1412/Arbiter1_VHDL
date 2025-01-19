@@ -41,30 +41,31 @@ begin
 		case current_state is
 			when IDLE =>
 				if current_state /= prev_current_state or cmd /= prev_cmd then
-					gnt_temp <= "000";
 					prev_current_state <= current_state;
 					prev_cmd <= cmd;
+					gnt_temp <= "000";
+					counter <= "00";
 					if reset = '0' then
 						if cmd = '1' then
 							req_temp <= req;
 							next_state <= READY;
 						else
+							req_temp <= (others => '0');
 							next_state <= IDLE;
 						end if;
 					else
-						next_state <= IDLE;
 						n1_temp <= (others => '0');
 						n2_temp <= (others => '0');
 						n3_temp <= (others => '0');
-						counter <= "00";
 						req_temp <= (others => '0');
+						next_state <= IDLE;
 					end if;
 				end if;
 			when READY =>
 				if current_state /= prev_current_state or cmd /= prev_cmd or (rising_edge(clk) and next_state /= GO) then
-					gnt_temp <= "000";
 					prev_current_state <= current_state;
 					prev_cmd <= cmd;
+					gnt_temp <= "000";
 					if cmd = '0' then
 						if counter < 2 then
 							counter <= counter + 1;
