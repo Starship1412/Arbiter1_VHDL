@@ -1,0 +1,34 @@
+--arb_tb.psl
+ 
+vunit check_arb(testbench(behavioral))
+{
+  default clock is (rising_edge(clk_tb));
+  
+  property constraint0 is always (cmd_tb -> next not cmd_tb);
+  
+  -- to be completed :
+  property constraint1 is always (cmd_tb -> {req_tb /= "000"});
+  
+  -- to be completed :
+  property constraint2 is always ({not cmd_tb[*5]} |=> cmd_tb);
+  
+  assert constraint0;
+  
+  assert constraint1;
+  
+  assert constraint2;
+  
+  property assertion0 is always (cmd_tb -> next[4] (onehot(gnt_tb))); -- parenthesis around onehot is mandatory
+
+  -- to be completed :
+  property assertion1 is always ({cmd_tb; not cmd_tb} |=> {[*2]; onehot(gnt_tb)});
+  
+  -- to be completed :
+  property assertion2 is always ({cmd_tb; not cmd_tb} |=> {[*2]; (gnt_tb and prev(req_tb,4)) /= "000"});
+  
+  assert assertion0;
+  
+  assert assertion1;
+  
+  assert assertion2;
+  }
